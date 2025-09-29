@@ -34,6 +34,12 @@ th {font-size:0.85rem;color:var(--muted);}
 .ranking-row {display:flex; align-items:center; gap:10px;}
 .ranking-row img {width:28px; height:40px; image-rendering: pixelated;}
 .top1 {background:linear-gradient(90deg,rgba(123,92,255,0.2),transparent);}
+.ranking-row img {
+  width: 50px;
+  height: 50px;
+  image-rendering: pixelated;
+}
+
 </style>
 </head>
 <body>
@@ -201,7 +207,7 @@ function addToLocalRanking(name, duration){
   data.sort((a,b)=>b.total_seconds - a.total_seconds);
   rankingBody.innerHTML = data.map((item, idx)=>{
     const cls = idx===0?'class="top1"':'';
-    const headUrl = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(item.name)}&headonly=1&direction=2&head_direction=2&size=m`;
+   const headUrl = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(item.name)}&action=std&direction=4&head_direction=3&img_format=png&gesture=sml&headonly=1&size=b`;
     return `<tr ${cls}><td>#${idx+1}</td><td><div class="ranking-row"><img src="${headUrl}" alt="head"> ${item.name}</div></td><td>${formatHMS(item.total_seconds)}</td></tr>`;
   }).join('');
 }
@@ -213,7 +219,7 @@ function hmsToSec(hms){
 
 // Atualiza ranking a cada 10s
 loadRanking();
-setInterval(loadRanking,10000);
+setInterval(loadRanking,30000);
 </script>
 
 </body>
