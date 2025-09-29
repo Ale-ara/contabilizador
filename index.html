@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Marcação de Presença — Tracker</title>
+<style>
+:root {
+  font-family: 'Poppins', Inter, system-ui, sans-serif;
+  --bg: #0d0b1a;
+  --card: #15122b;
+  --accent: #7b5cff;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+}
+body {margin:0; background:var(--bg); color:var(--text); padding:24px;}
+.card {background:var(--card); padding:20px; border-radius:14px; box-shadow:0 0 20px rgba(0,0,0,0.4); max-width:850px; margin:0 auto 24px;}
+strong {font-size:1.2rem;}
+.muted {color:var(--muted); font-size:0.85rem;}
+.row {display:flex; gap:12px; align-items:center;}
+input[type=text]{padding:10px; border-radius:8px; border:1px solid #2c2a40; flex:1; background:#1f1c33; color: var(--text);}
+button {padding:10px 14px; border-radius:8px; border:0; cursor:pointer; font-weight:500; transition:.2s;}
+button:hover{opacity:.9;}
+button#startBtn{background: var(--accent); color:#fff;}
+button#pauseBtn{background:#f59e0b; color:#fff; display:none;}
+button#resumeBtn{background:#10b981; color:#fff; display:none;}
+button#stopBtn{background:#dc2626; color:#fff; display:none;}
+.timer {font-weight:700;font-size:22px;}
+.user-display {display:flex; align-items:center; gap:10px; margin-top:10px;}
+.user-display img {width:40px; height:40px; image-rendering:pixelated; border-radius:4px;}
+.card table {width:100%; border-collapse:collapse; margin-top:12px;}
+th,td {padding:10px; text-align:left; border-bottom:1px solid #2c2a40;}
+th {font-size:0.85rem;color:var(--muted);}
+.ranking-row {display:flex; align-items:center; gap:10px;}
+.ranking-row img {width:28px; height:40px; image-rendering: pixelated;}
+.top1 {background:linear-gradient(90deg,rgba(123,92,255,0.2),transparent);}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <strong>Marcação de Presença</strong>
+
+  <div class="row" style="margin-top:12px;">
+    <input id="name" type="text" placeholder="Digite seu nick (Habbo)">
+    <button id="startBtn">Iniciar</button>
+  </div>
+
+  <div id="userInfo" class="user-display hidden">
+    <img id="avatarImg" src="" alt="Avatar">
+    <span id="displayName"></span>
+  </div>
+
+  <div style="margin-top:12px;">
+    <div class="muted">Tempo atual</div>
+    <div id="timer" class="timer">00:00:00</div>
+  </div>
+
+  <div class="row" style="margin-top:12px; gap:10px;">
+    <button id="pauseBtn">Pausar</button>
+    <button id="resumeBtn">Retomar</button>
+    <button id="stopBtn">Finalizar</button>
+  </div>
+</div>
+
+<div class="card">
+  <strong>Ranking do dia</strong>
+  <table>
+    <thead><tr><th>Pos</th><th>Usuário</th><th>Tempo</th></tr></thead>
+    <tbody id="rankingBody"><tr><td colspan="3" class="muted">Carregando...</td></tr></tbody>
+  </table>
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_fnOSXdio9eNbfOI1_I2QCUjBch5H2hFPNJfeYXz-tLcWHzMQNO3-bT1o_t1IaKH1/exec';
+
+const nameInput = document.getElementById('name');
+const startBtn = document.getElementById('startBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const resumeBtn = document.getElementById('resumeBtn');
+const stopBtn = document.getElementById('stopBtn');
+const timerEl = document.getElementById('timer');
+const userInfo = document.getElementById('userInfo');
+const avatarImg = document.getElementById('avatarImg');
+const displayName = document.getElementById('displayName');
+const rankingBody = document.getElementById('rankingBody');
+
+let startTs = null, pauseAccum = 0, timerInterval = null;
+
+function formatHMS(sec){
+  const h=Math.floor(sec/3600).toString().padStart(2,'0');
+  const m=Math.floor((sec%3600)/60).toString().padStart(2,'0');
+  const s=Math.floor(sec%60).toString().padStart(2,'0');
+  return `${h}:${m}:${s}`;
+}
+
+function tick(){ 
+  const elapsed = startTs ? Math.floor((Date.now()-startTs)/1000)+pauseAccum : pauseAccum;
+  timerEl.textContent = formatHMS(elapsed);
+}
+
+startBtn.addEventListener('click', ()=>{
+  const name = nameInput.value.trim();
+  if(!name){ alert('Digite seu nick!'); return;}
+
+   avatarImg.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(name)}&headonly=1&direction=2&head_direction=2&size=m`;
+userInfo.classList.add('show');
+  userInfo.classList.remove('hidden');
+
+  startTs = Date.now(); pauseAccum = 0;
+  timerInterval = setInterval(tick,500);
+
+  startBtn.style.display='none';
+  pauseBtn.style.display='inline-block';
+  stopBtn.style.display='inline-block';
+  resumeBtn.style.display='none';
+});
+
+pauseBtn.addEventListener('click', ()=>{
+  pauseAccum += Math.floor((Date.now()-startTs)/1000);
+  clearInterval(timerInterval);
+  startTs = null;
+  pauseBtn.style.display='none';
+  resumeBtn.style.display='inline-block';
+});
+
+resumeBtn.addEventListener('click', ()=>{
+  startTs = Date.now();
+  timerInterval = setInterval(tick,500);
+  resumeBtn.style.display='none';
+  pauseBtn.style.display='inline-block';
+});
+
+stopBtn.addEventListener('click', async ()=>{
+  if(startTs) pauseAccum += Math.floor((Date.now()-startTs)/1000);
+  clearInterval(timerInterval);
+  startTs = null;
+
+  const payload = {
+    action:'log',
+    name:nameInput.value.trim(),
+    date:new Date().toISOString().slice(0,10),
+    start:new Date(Date.now()-pauseAccum*1000).toISOString(),
+    end:new Date().toISOString(),
+    duration:pauseAccum
+  };
+
+  try{
+    const res = await fetch(SCRIPT_URL,{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+    const js = await res.json();
+    if(js.result==='ok') loadRanking();
+    else throw new Error(js.error||'Erro desconhecido');
+  } catch(e){ console.error(e); }
+
+  timerEl.textContent='00:00:00';
+  pauseAccum=0;
+  startBtn.style.display='inline-block';
+  pauseBtn.style.display='none';
+  resumeBtn.style.display='none';
+  stopBtn.style.display='none';
+  userInfo.classList.add('hidden');
+  nameInput.value='';
+});
+
+// Ranking
+async function loadRanking(){
+  rankingBody.innerHTML='<tr><td colspan="3" class="muted">Carregando...</td></tr>';
+  try{
+    const res = await fetch(SCRIPT_URL+'?action=ranking');
+    const data = await res.json();
+    if(!Array.isArray(data) || data.length===0){
+      rankingBody.innerHTML='<tr><td colspan="3" class="muted">Nenhum registro</td></tr>';
+      return;
+    }
+    rankingBody.innerHTML = data.map((item, idx)=>{
+      const cls = idx===0?'class="top1"':'';
+      const headUrl = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(item.name)}&headonly=1&direction=2&head_direction=2&size=m`;
+      return `<tr ${cls}><td>#${idx+1}</td><td><div class="ranking-row"><img src="${headUrl}" alt="head"> ${item.name}</div></td><td>${formatHMS(item.total_seconds)}</td></tr>`;
+    }).join('');
+  }catch(e){ console.error(e); rankingBody.innerHTML='<tr><td colspan="3" class="muted">Erro ao carregar</td></tr>';}
+}
+
+// Atualiza ranking a cada 10s
+loadRanking();
+setInterval(loadRanking,10000);
+</script>
+</body>
+</html>
