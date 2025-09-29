@@ -72,7 +72,7 @@ th {font-size:0.85rem;color:var(--muted);}
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzFB4R6kr-uYV1qR2LMEL4davT4Ep8pQoXUqYK15rFdz_a-uPbujA5In6IPhUOiuY0/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_fnOSXdio9eNbfOI1_I2QCUjBch5H2hFPNJfeYXz-tLcWHzMQNO3-bT1o_t1IaKH1/exec';
 
 const nameInput = document.getElementById('name');
 const startBtn = document.getElementById('startBtn');
@@ -85,6 +85,7 @@ const avatarImg = document.getElementById('avatarImg');
 const rankingBody = document.getElementById('rankingBody');
 
 let startTs = null, pauseAccum = 0, timerInterval = null;
+let sending = false; // flag para travar o botão durante envio
 
 function formatHMS(sec){
   const h=Math.floor(sec/3600).toString().padStart(2,'0');
@@ -130,39 +131,51 @@ resumeBtn.addEventListener('click', ()=>{
 });
 
 stopBtn.addEventListener('click', async ()=>{
+  if(sending) return; // trava botão se estiver enviando
+  sending = true;
+  stopBtn.textContent = "Enviando...";
+
   if(startTs) pauseAccum += Math.floor((Date.now()-startTs)/1000);
   clearInterval(timerInterval);
   startTs = null;
 
+  const userName = nameInput.value.trim();
   const payload = {
     action:'log',
-    name:nameInput.value.trim(),
+    name:userName,
     date:new Date().toISOString().slice(0,10),
     start:new Date(Date.now()-pauseAccum*1000).toISOString(),
     end:new Date().toISOString(),
     duration:pauseAccum
   };
 
+  // Atualiza ranking localmente antes do envio
+  addToLocalRanking(userName, pauseAccum);
+
   try{
     await fetch(SCRIPT_URL, {
       method:'POST',
       body: JSON.stringify(payload),
-      mode: 'no-cors' // evita CORS
+      mode: 'no-cors'
     });
   } catch(e){ console.error(e); }
 
+  // reset UI
   timerEl.textContent='00:00:00';
   pauseAccum=0;
   startBtn.style.display='inline-block';
   pauseBtn.style.display='none';
   resumeBtn.style.display='none';
   stopBtn.style.display='none';
+  stopBtn.textContent='Finalizar';
+  sending = false;
   userInfo.classList.add('hidden');
   nameInput.value='';
 
-  loadRanking();
+  loadRanking(); // recarrega ranking do servidor
 });
 
+// Ranking
 async function loadRanking(){
   rankingBody.innerHTML='<tr><td colspan="3" class="muted">Carregando...</td></tr>';
   try{
@@ -180,8 +193,32 @@ async function loadRanking(){
   }catch(e){ console.error(e); rankingBody.innerHTML='<tr><td colspan="3" class="muted">Erro ao carregar</td></tr>';}
 }
 
+// Adiciona usuário ao ranking local para efeito instantâneo
+function addToLocalRanking(name, duration){
+  const rows = Array.from(rankingBody.querySelectorAll('tr')).filter(r=>!r.querySelector('td[colspan]'));
+  const data = rows.map(r=>{
+    const tds = r.querySelectorAll('td');
+    return {name: tds[1].textContent.trim(), total_seconds: hmsToSec(tds[2].textContent)};
+  });
+  data.push({name, total_seconds: duration});
+  data.sort((a,b)=>b.total_seconds - a.total_seconds);
+
+  rankingBody.innerHTML = data.map((item, idx)=>{
+    const cls = idx===0?'class="top1"':'';
+    const headUrl = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(item.name)}&headonly=1&direction=2&head_direction=2&size=m`;
+    return `<tr ${cls}><td>#${idx+1}</td><td><div class="ranking-row"><img src="${headUrl}" alt="head"> ${item.name}</div></td><td>${formatHMS(item.total_seconds)}</td></tr>`;
+  }).join('');
+}
+
+function hmsToSec(hms){
+  const [h,m,s] = hms.split(':').map(Number);
+  return h*3600 + m*60 + s;
+}
+
+// Atualiza ranking a cada 10s
 loadRanking();
 setInterval(loadRanking,10000);
 </script>
+
 </body>
 </html>
