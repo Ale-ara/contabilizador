@@ -46,7 +46,7 @@ th {font-size:0.85rem;color:var(--muted);}
     <button id="startBtn">Iniciar</button>
   </div>
 
-  <div id="userInfo" class="user-display hidden" style="display:none;">
+  <div id="userInfo" class="user-display hidden">
     <img id="avatarImg" src="" alt="Avatar">
     <span id="displayName"></span>
   </div>
@@ -72,7 +72,7 @@ th {font-size:0.85rem;color:var(--muted);}
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwcO-iaufh3m0nywjoB7XhiPrBFTSfETi84dpx4wA0S70eakFj49iaR3301effFtI8F/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzkbS3eVMIASgMmDjkTUaEFWi8m0v9fqCXqmb5eI3bPoM0Ta-g8wJpnzKTwDS5R8M95/exec';
 
 const nameInput = document.getElementById('name');
 const startBtn = document.getElementById('startBtn');
@@ -102,12 +102,10 @@ function tick(){
 startBtn.addEventListener('click', ()=>{
   const name = nameInput.value.trim();
   if(!name){ alert('Digite seu nick!'); return;}
-
   avatarImg.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(name)}&headonly=1&direction=2&head_direction=2&size=m`;
-  userInfo.style.display='flex';
+  userInfo.classList.add('show'); userInfo.classList.remove('hidden');
   startTs = Date.now(); pauseAccum = 0;
   timerInterval = setInterval(tick,500);
-
   startBtn.style.display='none';
   pauseBtn.style.display='inline-block';
   stopBtn.style.display='inline-block';
@@ -148,17 +146,18 @@ stopBtn.addEventListener('click', async ()=>{
     duration:pauseAccum
   };
 
-  // Atualiza ranking localmente
+  // Atualiza ranking local
   addToLocalRanking(userName, pauseAccum);
 
   try{
-    await fetch(SCRIPT_URL, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
+    await fetch(SCRIPT_URL,{
+      method:'POST',
+      body: JSON.stringify(payload),
+      mode: 'no-cors'
     });
   } catch(e){ console.error(e); }
 
+  // Reset UI
   timerEl.textContent='00:00:00';
   pauseAccum=0;
   startBtn.style.display='inline-block';
@@ -167,12 +166,13 @@ stopBtn.addEventListener('click', async ()=>{
   stopBtn.style.display='none';
   stopBtn.textContent='Finalizar';
   sending = false;
-  userInfo.style.display='none';
+  userInfo.classList.add('hidden');
   nameInput.value='';
 
   loadRanking();
 });
 
+// Ranking
 async function loadRanking(){
   rankingBody.innerHTML='<tr><td colspan="3" class="muted">Carregando...</td></tr>';
   try{
@@ -187,9 +187,10 @@ async function loadRanking(){
       const headUrl = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(item.name)}&headonly=1&direction=2&head_direction=2&size=m`;
       return `<tr ${cls}><td>#${idx+1}</td><td><div class="ranking-row"><img src="${headUrl}" alt="head"> ${item.name}</div></td><td>${formatHMS(item.total_seconds)}</td></tr>`;
     }).join('');
-  } catch(e){ console.error(e); rankingBody.innerHTML='<tr><td colspan="3" class="muted">Erro ao carregar</td></tr>';}
+  }catch(e){ console.error(e); rankingBody.innerHTML='<tr><td colspan="3" class="muted">Erro ao carregar</td></tr>';}
 }
 
+// Local ranking instantâneo
 function addToLocalRanking(name, duration){
   const rows = Array.from(rankingBody.querySelectorAll('tr')).filter(r=>!r.querySelector('td[colspan]'));
   const data = rows.map(r=>{
@@ -198,7 +199,6 @@ function addToLocalRanking(name, duration){
   });
   data.push({name, total_seconds: duration});
   data.sort((a,b)=>b.total_seconds - a.total_seconds);
-
   rankingBody.innerHTML = data.map((item, idx)=>{
     const cls = idx===0?'class="top1"':'';
     const headUrl = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(item.name)}&headonly=1&direction=2&head_direction=2&size=m`;
@@ -211,6 +211,7 @@ function hmsToSec(hms){
   return h*3600 + m*60 + s;
 }
 
+// Atualiza ranking a cada 10s
 loadRanking();
 setInterval(loadRanking,10000);
 </script>
