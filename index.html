@@ -72,7 +72,7 @@ th {font-size:0.85rem;color:var(--muted);}
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_fnOSXdio9eNbfOI1_I2QCUjBch5H2hFPNJfeYXz-tLcWHzMQNO3-bT1o_t1IaKH1/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzFB4R6kr-uYV1qR2LMEL4davT4Ep8pQoXUqYK15rFdz_a-uPbujA5In6IPhUOiuY0/exec';
 
 const nameInput = document.getElementById('name');
 const startBtn = document.getElementById('startBtn');
@@ -82,7 +82,6 @@ const stopBtn = document.getElementById('stopBtn');
 const timerEl = document.getElementById('timer');
 const userInfo = document.getElementById('userInfo');
 const avatarImg = document.getElementById('avatarImg');
-const displayName = document.getElementById('displayName');
 const rankingBody = document.getElementById('rankingBody');
 
 let startTs = null, pauseAccum = 0, timerInterval = null;
@@ -103,9 +102,8 @@ startBtn.addEventListener('click', ()=>{
   const name = nameInput.value.trim();
   if(!name){ alert('Digite seu nick!'); return;}
 
-   avatarImg.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(name)}&headonly=1&direction=2&head_direction=2&size=m`;
-userInfo.classList.add('show');
-  userInfo.classList.remove('hidden');
+  avatarImg.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(name)}&headonly=1&direction=2&head_direction=2&size=m`;
+  userInfo.classList.add('show'); userInfo.classList.remove('hidden');
 
   startTs = Date.now(); pauseAccum = 0;
   timerInterval = setInterval(tick,500);
@@ -146,10 +144,11 @@ stopBtn.addEventListener('click', async ()=>{
   };
 
   try{
-    const res = await fetch(SCRIPT_URL,{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
-    const js = await res.json();
-    if(js.result==='ok') loadRanking();
-    else throw new Error(js.error||'Erro desconhecido');
+    await fetch(SCRIPT_URL, {
+      method:'POST',
+      body: JSON.stringify(payload),
+      mode: 'no-cors' // evita CORS
+    });
   } catch(e){ console.error(e); }
 
   timerEl.textContent='00:00:00';
@@ -160,9 +159,10 @@ stopBtn.addEventListener('click', async ()=>{
   stopBtn.style.display='none';
   userInfo.classList.add('hidden');
   nameInput.value='';
+
+  loadRanking();
 });
 
-// Ranking
 async function loadRanking(){
   rankingBody.innerHTML='<tr><td colspan="3" class="muted">Carregando...</td></tr>';
   try{
@@ -180,7 +180,6 @@ async function loadRanking(){
   }catch(e){ console.error(e); rankingBody.innerHTML='<tr><td colspan="3" class="muted">Erro ao carregar</td></tr>';}
 }
 
-// Atualiza ranking a cada 10s
 loadRanking();
 setInterval(loadRanking,10000);
 </script>
