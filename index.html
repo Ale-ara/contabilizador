@@ -153,12 +153,11 @@ stopBtn.addEventListener('click', async ()=>{
   addToLocalRanking(userName, pauseAccum);
 
   try{
-    await fetch(SCRIPT_URL, {
-      method:'POST',
-      body: JSON.stringify(payload),
-      mode: 'no-cors'
-    });
-  } catch(e){ console.error(e); }
+   await fetch(SCRIPT_URL, {
+  method: 'POST',
+  headers: {'Content-Type':'application/json'},
+  body: JSON.stringify(payload)
+});
 
   // reset UI
   timerEl.textContent='00:00:00';
