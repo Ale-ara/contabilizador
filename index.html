@@ -72,7 +72,7 @@ th {font-size:0.85rem;color:var(--muted);}
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_7HuPx1LYZsWtvl4c_FKnxbKnVhgAjRTd637jzjlVSROtG_DoTB5dTakvEHXNnpfS/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwcO-iaufh3m0nywjoB7XhiPrBFTSfETi84dpx4wA0S70eakFj49iaR3301effFtI8F/exec';
 
 const nameInput = document.getElementById('name');
 const startBtn = document.getElementById('startBtn');
@@ -102,10 +102,9 @@ function tick(){
 startBtn.addEventListener('click', ()=>{
   const name = nameInput.value.trim();
   if(!name){ alert('Digite seu nick!'); return;}
-  
+
   avatarImg.src = `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${encodeURIComponent(name)}&headonly=1&direction=2&head_direction=2&size=m`;
   userInfo.style.display='flex';
-
   startTs = Date.now(); pauseAccum = 0;
   timerInterval = setInterval(tick,500);
 
@@ -149,9 +148,10 @@ stopBtn.addEventListener('click', async ()=>{
     duration:pauseAccum
   };
 
+  // Atualiza ranking localmente
   addToLocalRanking(userName, pauseAccum);
 
-  try {
+  try{
     await fetch(SCRIPT_URL, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
@@ -166,14 +166,13 @@ stopBtn.addEventListener('click', async ()=>{
   resumeBtn.style.display='none';
   stopBtn.style.display='none';
   stopBtn.textContent='Finalizar';
-  sending=false;
+  sending = false;
   userInfo.style.display='none';
   nameInput.value='';
 
   loadRanking();
 });
 
-// Ranking
 async function loadRanking(){
   rankingBody.innerHTML='<tr><td colspan="3" class="muted">Carregando...</td></tr>';
   try{
@@ -191,8 +190,7 @@ async function loadRanking(){
   } catch(e){ console.error(e); rankingBody.innerHTML='<tr><td colspan="3" class="muted">Erro ao carregar</td></tr>';}
 }
 
-// Local ranking instantâneo
-function addToLocalRanking(name,duration){
+function addToLocalRanking(name, duration){
   const rows = Array.from(rankingBody.querySelectorAll('tr')).filter(r=>!r.querySelector('td[colspan]'));
   const data = rows.map(r=>{
     const tds = r.querySelectorAll('td');
@@ -213,7 +211,6 @@ function hmsToSec(hms){
   return h*3600 + m*60 + s;
 }
 
-// Atualiza ranking a cada 10s
 loadRanking();
 setInterval(loadRanking,10000);
 </script>
