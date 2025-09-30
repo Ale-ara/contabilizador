@@ -3,13 +3,34 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Marcação de Presença — Tracker</title>
-<style>
+<title>[PMHH] Sistema de Pontuações</title>
+ <link rel="icon" href="https://i.imgur.com/nKUsYyB.png" />
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" xintegrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <style>
+     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+
+::-webkit-scrollbar {
+        width: 12px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #24473c;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #2C5046;
+        border-radius: 10px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #142520;
+      }
+
 :root {
   font-family: 'Poppins', Inter, system-ui, sans-serif;
-  --bg: #0d0b1a;
-  --card: #15122b;
-  --accent: #7b5cff;
+  --bg: #142520;
+  --card: #0c1613;
+  --accent: #305e50;
   --text: #e5e7eb;
   --muted: #9ca3af;
 }
@@ -18,7 +39,7 @@ body {margin:0; background:var(--bg); color:var(--text); padding:24px;}
 strong {font-size:1.2rem;}
 .muted {color:var(--muted); font-size:0.85rem;}
 .row {display:flex; gap:12px; align-items:center;}
-input[type=text]{padding:10px; border-radius:8px; border:1px solid #2c2a40; flex:1; background:#1f1c33; color: var(--text);}
+input[type=text]{padding:10px; border-radius:8px; border:1px solid #24473c; flex:1; background:#162d26; color: var(--text);}
 button {padding:10px 14px; border-radius:8px; border:0; cursor:pointer; font-weight:500; transition:.2s;}
 button:hover{opacity:.9;}
 button#startBtn{background: var(--accent); color:#fff;}
@@ -29,20 +50,98 @@ button#stopBtn{background:#dc2626; color:#fff; display:none;}
 .user-display {display:flex; align-items:center; gap:10px; margin-top:10px;}
 .user-display img {width:40px; height:40px; image-rendering:pixelated; border-radius:4px;}
 .card table {width:100%; border-collapse:collapse; margin-top:12px;}
-th,td {padding:10px; text-align:left; border-bottom:1px solid #2c2a40;}
+th,td {padding:10px; text-align:left; border-bottom:1px solid #24473c;}
 th {font-size:0.85rem;color:var(--muted);}
 .ranking-row {display:flex; align-items:center; gap:10px;}
 .ranking-row img {width:28px; height:40px; image-rendering: pixelated;}
-.top1 {background:linear-gradient(90deg,rgba(123,92,255,0.2),transparent);}
+.top1 {background:linear-gradient(90deg,rgba(35,69,36,0.9),transparent);}
 .ranking-row img {
   width: 50px;
   height: 50px;
   image-rendering: pixelated;
 }
 
+.header {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header img {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  position: relative;
+  z-index: 1;
+}
+
+.header::before {
+  content: "";
+  position: absolute;
+  width: 140px;  
+  height: 140px;
+  border-radius: 30%;
+  background: radial-gradient(circle, #24473c, transparent 60%); /* deixa mais concentrado */
+  z-index: 0;
+  animation: pulseGlow 2s infinite alternate;
+}
+
+@keyframes pulseGlow {
+  0% { transform: scale(1); opacity: 0.6; }
+  30% { transform: scale(1.4); opacity: 1; }  /* aumenta o brilho */
+  100% { transform: scale(1); opacity: 0.6; }
+}
+
+.header h1 {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.header p {
+  color: var(--muted);
+  font-size: 1rem;
+  margin-top: 4px;
+}
+
+
+
+footer {
+  background: var(--card);
+  padding: 8px 12px;
+  margin-top: 20px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+footer p {
+  margin: 2px 0;
+font-size: 12px; /* letra menor */
+  color: var(--muted);
+  line-height: 1.2;
+}
+
+footer strong {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 12px; /* letra menor */
+}
+
+
+
 </style>
 </head>
 <body>
+
+    <div class="header">
+  <img src="https://i.imgur.com/hfQhKln.png" alt="Ícone">
+  <h1>Sistema de Pontuações</h1>
+  <p>Plataforma para conferência de temporização e registro.</p>
+</div>
 
 <div class="card">
   <strong>Marcação de Presença</strong>
@@ -70,12 +169,17 @@ th {font-size:0.85rem;color:var(--muted);}
 </div>
 
 <div class="card">
-  <strong>Ranking do dia</strong>
+  <strong>Ranking</strong>
   <table>
-    <thead><tr><th>Pos</th><th>Usuário</th><th>Tempo</th></tr></thead>
+    <thead><tr><th>🏅</th><th>Usuário</th><th>Tempo</th></tr></thead>
     <tbody id="rankingBody"><tr><td colspan="3" class="muted">Carregando...</td></tr></tbody>
   </table>
 </div>
+
+<footer>
+  <p><i class="fas fa-code"></i> <strong>i,t</strong></p>
+  <p><i class="far fa-registered"></i> Direitos reservados à <strong>Polícia Militar do Habbo Hotel</strong></p>
+</footer>
 
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzLFOHR4_IkMfBnfQx2przYTXornX-zpkEOD-MVY17g8yuKIYMAW_4DVcBskobXhms/exec';
@@ -219,8 +323,7 @@ function hmsToSec(hms){
 
 // Atualiza ranking a cada 10s
 loadRanking();
-setInterval(loadRanking,30000);
+setInterval(loadRanking,60000);
 </script>
-
 </body>
 </html>
